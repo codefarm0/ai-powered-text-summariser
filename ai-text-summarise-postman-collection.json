@@ -1,0 +1,452 @@
+{
+  "info": {
+    "name": "AI Text Summariser",
+    "description": "REST API collection for the AI-Powered Text Summariser built with Spring AI & Ollama.\n\n## Setup\n\n1. Start MySQL: `docker compose up -d mysql`\n2. Start backend: `cd ai-text-summariser && ./gradlew bootRun`\n3. Ensure Ollama is running: `curl http://localhost:11434/api/tags`\n\n## Authentication\n\nThe API uses `X-User-Id` header for guest user identification.\nRun **Create Guest User** first, then the variable `publicId` is auto-set.\nEvery subsequent request includes `X-User-Id` via the collection header.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "ai-text-summariser"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "publicId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "projectId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "summaryId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "header": [
+    {
+      "key": "Content-Type",
+      "value": "application/json",
+      "type": "default"
+    },
+    {
+      "key": "X-User-Id",
+      "value": "{{publicId}}",
+      "type": "default"
+    }
+  ],
+  "item": [
+    {
+      "name": "Users",
+      "description": "Guest user management endpoints",
+      "item": [
+        {
+          "name": "Create Guest User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var json = pm.response.json();",
+                  "    pm.collectionVariables.set('publicId', json.data.publicId);",
+                  "    console.log('Set publicId:', json.data.publicId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/guest",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "guest"]
+            },
+            "description": "Creates a new guest user. The returned publicId is automatically stored in the `publicId` collection variable."
+          },
+          "response": [
+            {
+              "name": "Created",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"publicId\": \"71a18a6c-73cf-4d63-a667-7d26dbe4a53b\",\n    \"displayName\": \"Guest-2048\",\n    \"preferredModel\": \"mistral\",\n    \"preferredSummaryType\": \"EXECUTIVE\",\n    \"createdAt\": \"2026-07-08T00:00:00\",\n    \"lastActiveAt\": \"2026-07-08T00:00:00\"\n  },\n  \"timestamp\": \"2026-07-08T00:00:00\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get User Profile",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "me"]
+            },
+            "description": "Returns the profile of the authenticated user (identified via X-User-Id header)."
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"publicId\": \"71a18a6c-73cf-4d63-a667-7d26dbe4a53b\",\n    \"displayName\": \"Guest-2048\",\n    \"preferredModel\": \"mistral\",\n    \"preferredSummaryType\": \"EXECUTIVE\",\n    \"createdAt\": \"2026-07-08T00:00:00\",\n    \"lastActiveAt\": \"2026-07-08T00:00:00\"\n  },\n  \"timestamp\": \"2026-07-08T00:00:00\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Preferences",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"preferredModel\": \"llama3\",\n  \"preferredSummaryType\": \"DETAILED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/preferences",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "preferences"]
+            },
+            "description": "Updates the user's preferred AI model and default summary type."
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"publicId\": \"71a18a6c-73cf-4d63-a667-7d26dbe4a53b\",\n    \"displayName\": \"Guest-2048\",\n    \"preferredModel\": \"llama3\",\n    \"preferredSummaryType\": \"DETAILED\",\n    \"createdAt\": \"2026-07-08T00:00:00\",\n    \"lastActiveAt\": \"2026-07-08T00:00:00\"\n  },\n  \"timestamp\": \"2026-07-08T00:00:00\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Projects",
+      "description": "Project CRUD operations. Projects are the primary organizational unit.",
+      "item": [
+        {
+          "name": "Create Project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var json = pm.response.json();",
+                  "    pm.collectionVariables.set('projectId', json.data.id);",
+                  "    console.log('Set projectId:', json.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Spring AI Learning\",\n  \"description\": \"Exploring Spring AI and local LLM integration\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/projects",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "projects"]
+            },
+            "description": "Creates a new project for the authenticated user."
+          },
+          "response": [
+            {
+              "name": "Created",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Spring AI Learning\",\n    \"description\": \"Exploring Spring AI and local LLM integration\",\n    \"defaultModel\": \"mistral\",\n    \"createdAt\": \"2026-07-08T00:00:00\",\n    \"updatedAt\": \"2026-07-08T00:00:00\"\n  },\n  \"timestamp\": \"2026-07-08T00:00:00\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Projects",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/projects?page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "projects"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            },
+            "description": "Returns paginated list of projects for the authenticated user."
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"content\": [\n      {\n        \"id\": 1,\n        \"name\": \"Spring AI Learning\",\n        \"description\": \"Exploring Spring AI and local LLM integration\",\n        \"defaultModel\": \"mistral\",\n        \"createdAt\": \"2026-07-08T00:00:00\",\n        \"updatedAt\": \"2026-07-08T00:00:00\"\n      }\n    ],\n    \"page\": 0,\n    \"size\": 10,\n    \"totalElements\": 1,\n    \"totalPages\": 1\n  },\n  \"timestamp\": \"2026-07-08T00:00:00\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Project",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/projects/{{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "projects", "{{projectId}}"]
+            },
+            "description": "Returns details of a specific project."
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Spring AI Learning\",\n    \"description\": \"Exploring Spring AI and local LLM integration\",\n    \"defaultModel\": \"mistral\",\n    \"createdAt\": \"2026-07-08T00:00:00\",\n    \"updatedAt\": \"2026-07-08T00:00:00\"\n  },\n  \"timestamp\": \"2026-07-08T00:00:00\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Project",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Spring AI Learning - Updated\",\n  \"description\": \"Updated project description\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/projects/{{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "projects", "{{projectId}}"]
+            },
+            "description": "Updates the name and/or description of a project."
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Spring AI Learning - Updated\",\n    \"description\": \"Updated project description\",\n    \"defaultModel\": \"mistral\",\n    \"createdAt\": \"2026-07-08T00:00:00\",\n    \"updatedAt\": \"2026-07-08T00:00:01\"\n  },\n  \"timestamp\": \"2026-07-08T00:00:01\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Project",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/projects/{{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "projects", "{{projectId}}"]
+            },
+            "description": "Deletes a project and all associated summaries."
+          },
+          "response": [
+            {
+              "name": "No Content",
+              "status": "No Content",
+              "code": 204,
+              "body": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Summaries",
+      "description": "AI summary generation and management endpoints.",
+      "item": [
+        {
+          "name": "Generate Summary",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var json = pm.response.json();",
+                  "    pm.collectionVariables.set('summaryId', json.data.id);",
+                  "    console.log('Set summaryId:', json.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Artificial intelligence is transforming the software development landscape in unprecedented ways. From automated code generation to intelligent debugging assistants, AI-powered tools are becoming an integral part of modern development workflows. This transformation is not just about replacing human developers but augmenting their capabilities to achieve higher productivity and creativity. As these technologies continue to evolve, developers who embrace AI-assisted development will have a significant advantage in building complex, high-quality software systems.\",\n  \"summaryType\": \"EXECUTIVE\",\n  \"model\": \"mistral\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/projects/{{projectId}}/summaries",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "projects", "{{projectId}}", "summaries"]
+            },
+            "description": "Generates an AI-powered summary using Ollama. The summary is persisted and returned with token counts and response time."
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 1,\n    \"projectId\": 1,\n    \"originalText\": \"Artificial intelligence is transforming...\",\n    \"summary\": \"## Executive Summary\\n\\nArtificial intelligence is transforming the software development landscape...\\n\\n### Key Takeaways\\n\\n- AI augments developer capabilities\\n- Significant productivity gains\\n- Evolving technology landscape\",\n    \"summaryType\": \"EXECUTIVE\",\n    \"model\": \"mistral\",\n    \"inputTokens\": 85,\n    \"outputTokens\": 42,\n    \"responseTimeMs\": 1430,\n    \"createdAt\": \"2026-07-08T00:00:00\"\n  },\n  \"timestamp\": \"2026-07-08T00:00:00\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Stream Summary",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/projects/{{projectId}}/summaries/stream?text=Artificial%20intelligence%20is%20transforming%20software%20development&summaryType=SHORT&model=mistral",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "projects", "{{projectId}}", "summaries", "stream"],
+              "query": [
+                { "key": "text", "value": "Artificial intelligence is transforming software development" },
+                { "key": "summaryType", "value": "SHORT" },
+                { "key": "model", "value": "mistral" }
+              ]
+            },
+            "description": "Streams the AI-generated summary using Server-Sent Events (SSE). Words appear incrementally for a real-time typing effect. Use Postman's \"Send and Download\" or a browser to see the stream."
+          },
+          "response": [
+            {
+              "name": "Stream (SSE)",
+              "status": "OK",
+              "code": 200,
+              "body": "data: Artificial\n\ndata:  intelligence\n\ndata:  is\n\ndata:  transforming\n\ndata:  software\n\ndata:  development...\n"
+            }
+          ]
+        },
+        {
+          "name": "List Summaries",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/projects/{{projectId}}/summaries?page=0&size=10&summaryType=&model=",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "projects", "{{projectId}}", "summaries"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" },
+                { "key": "summaryType", "value": "", "disabled": true },
+                { "key": "model", "value": "", "disabled": true }
+              ]
+            },
+            "description": "Returns paginated summaries for a project. Supports optional filters: `summaryType` (SHORT, DETAILED, EXECUTIVE, BULLET_POINTS) and `model`."
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"content\": [\n      {\n        \"id\": 1,\n        \"projectId\": 1,\n        \"summary\": \"## Executive Summary...\",\n        \"summaryType\": \"EXECUTIVE\",\n        \"model\": \"mistral\",\n        \"inputTokens\": 85,\n        \"outputTokens\": 42,\n        \"responseTimeMs\": 1430,\n        \"createdAt\": \"2026-07-08T00:00:00\"\n      }\n    ],\n    \"page\": 0,\n    \"size\": 10,\n    \"totalElements\": 1,\n    \"totalPages\": 1\n  },\n  \"timestamp\": \"2026-07-08T00:00:00\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Summary",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/projects/{{projectId}}/summaries/{{summaryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "projects", "{{projectId}}", "summaries", "{{summaryId}}"]
+            },
+            "description": "Returns the full details of a specific summary including original text."
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 1,\n    \"projectId\": 1,\n    \"originalText\": \"Artificial intelligence is transforming...\",\n    \"summary\": \"## Executive Summary...\",\n    \"summaryType\": \"EXECUTIVE\",\n    \"model\": \"mistral\",\n    \"inputTokens\": 85,\n    \"outputTokens\": 42,\n    \"responseTimeMs\": 1430,\n    \"createdAt\": \"2026-07-08T00:00:00\"\n  },\n  \"timestamp\": \"2026-07-08T00:00:00\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Summary",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/projects/{{projectId}}/summaries/{{summaryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "projects", "{{projectId}}", "summaries", "{{summaryId}}"]
+            },
+            "description": "Deletes a specific summary."
+          },
+          "response": [
+            {
+              "name": "No Content",
+              "status": "No Content",
+              "code": 204,
+              "body": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Models",
+      "description": "AI model discovery and health check endpoints.",
+      "item": [
+        {
+          "name": "List Available Models",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/models",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "models"]
+            },
+            "description": "Returns the list of AI models configured for this application."
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"data\": [\"mistral\", \"llama3\", \"qwen\"],\n  \"timestamp\": \"2026-07-08T00:00:00\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Model Health Status",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/models/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "models", "status"]
+            },
+            "description": "Checks if the default AI model is accessible via Ollama."
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"model\": \"mistral\",\n    \"status\": \"ONLINE\"\n  },\n  \"timestamp\": \"2026-07-08T00:00:00\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
